@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Entorno y variables sensibles
+.env
+.venv/
+env/
+venv/
+ENV/
+
+# Empaquetado y compilación
+build/
+dist/
+*.spec
+
+# IDEs
+.vscode/
+.idea/
