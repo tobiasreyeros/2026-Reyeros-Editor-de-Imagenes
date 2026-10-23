@@ -63,6 +63,7 @@ El proyecto es un editor de imágenes de escritorio diseñado bajo una arquitect
 ### Módulo de Interfaz y Control (`interfaz.py` y `main.py`)
 * **`abrir_imagen()`:** Despliega el cuadro de selección de archivos del sistema operativo y valida mediante `Image.verify()` la integridad y compatibilidad del archivo cargado.
 * **`guardar_como()`:** Gestiona el guardado en disco con manejo seguro de formatos.
+* **`abrir_dialogo_correo()`:** Abre la ventana modal para redactar y enviar la imagen procesada por correo vía Gmail SMTP (acceso desde la barra de herramientas, menú Archivo o atajo `Ctrl + M`).
 * **`iniciar_vista_previa()` / `confirmar_vista_previa()` / `cancelar_vista_previa()`:** Controlan el ciclo de vida del requisito 3.8 del PDF. Permiten evaluar lado a lado el estado "Antes" y "Después", aplicando o descartando el cambio.
 * **`activar_herramienta_recorte()` / `_on_mouse_press()` / `_on_mouse_drag()` / `_on_mouse_release()`:** Capturan los eventos del ratón para proyectar la caja delimitadora en coordenadas del Canvas y calcular la correspondencia exacta con los píxeles reales de la imagen.
 * **`abrir_dialogo_recorte_coords()`:** Ventana modal que valida y ejecuta el recorte matemático según coordenadas ingresadas por el usuario.
@@ -94,13 +95,20 @@ El proyecto es un editor de imágenes de escritorio diseñado bajo una arquitect
 ### Módulo de Audio (`sonido.py`)
 * **`SonidoManager`:** Utiliza `winsound.MessageBeep` en Windows. Dispara la reproducción en un hilo separado (`threading.Thread`) como proceso demonio (`daemon=True`) para garantizar que la interfaz gráfica no sufra congelamientos.
 
+### Módulo de Correo Electrónico (`correo.py`)
+* **`GestorCorreo`:** Implementa la lógica para el envío de imágenes procesadas mediante el protocolo SMTP_SSL (`smtp.gmail.com:465`) utilizando las librerías estándar `smtplib` y `email`.
+  * **`validar_formato_correo(correo)`:** Valida sintácticamente la dirección de correo ingresada mediante una expresión regular.
+  * **`preparar_adjunto_con_limite(imagen, formato)`:** Codifica la imagen adjunta en memoria y controla que el mensaje MIME completo en Base64 no sobrepase el límite estricto de 25 MB de Gmail. Aplica compresión progresiva en calidad y reescalado automático en caso de superar el umbral permitido.
+  * **`enviar_correo(...)`:** Gestiona la autenticación segura, construcción del mensaje y despacho en hilo asíncrono, manejando fallas de conexión a internet, credenciales inválidas y rechazos del servidor.
+
 ---
 
 ## 4. Limitaciones y Errores Conocidos
 
+* **Envío de correos temporalmente inactivo (estado incompleto):** Aunque el nuevo módulo `correo.py` y la interfaz de redacción están plenamente integrados en el código principal, los envíos de correo aún no se pueden realizar debido a que la contraseña de aplicación de Google (`GMAIL_APP_PASSWORD`) aún no ha sido configurada en el código.
 * **Formatos de archivo admitidos:** La aplicación está optimizada para archivos JPEG, PNG y BMP. Formatos vectoriales (SVG) o de animación (GIF con múltiples cuadros) no están contemplados en esta etapa.
 * **Recorte mínimo:** No se permite realizar recortes menores a 5x5 píxeles para evitar selecciones accidentales por clics aislados.
-* **Envío de correo y empaquetado a ejecutable (.exe):** Estas características forman parte de los puntos pendientes a incorporar en las fases siguientes del proyecto, por lo que aún no se encuentran activas en la interfaz actual.
+* **Empaquetado a ejecutable (.exe):** La generación del binario ejecutable independiente para Windows corresponde a la etapa final del proyecto.
 
 ---
 

@@ -16,6 +16,7 @@ Autor: Proyecto Editor de Imágenes (5.º Año - IPETyM N° 246)
 
 import os
 import sys
+import threading
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from typing import Optional
@@ -24,6 +25,7 @@ from PIL import Image, ImageTk
 from procesador import ProcesadorImagen
 from historial import HistorialManager
 from sonido import SonidoManager
+from correo import GestorCorreo, REMITENTE_DEFAULT, DESTINATARIOS_PREDEFINIDOS
 
 
 def obtener_ruta_recurso(ruta_relativa: str) -> str:
@@ -101,6 +103,7 @@ class EditorApp:
         self.barra_menu.add_cascade(label="Archivo", menu=self.menu_archivo)
         self.menu_archivo.add_command(label="Abrir imagen... (Ctrl+O)", command=self.abrir_imagen)
         self.menu_archivo.add_command(label="Guardar como... (Ctrl+S)", command=self.guardar_como)
+        self.menu_archivo.add_command(label="Enviar por correo... (Ctrl+M)", command=self.abrir_dialogo_correo)
         self.menu_archivo.add_separator()
         self.menu_archivo.add_command(label="Cerrar imagen", command=self.cerrar_imagen)
         self.menu_archivo.add_separator()
@@ -171,6 +174,9 @@ class EditorApp:
 
         self.btn_guardar = tk.Button(self.frame_toolbar, text="💾 Guardar", relief=tk.GROOVE, padx=6, pady=2, command=self.guardar_como)
         self.btn_guardar.pack(side=tk.LEFT, padx=3, pady=3)
+
+        self.btn_correo = tk.Button(self.frame_toolbar, text="📧 Enviar Correo", relief=tk.GROOVE, padx=6, pady=2, command=self.abrir_dialogo_correo)
+        self.btn_correo.pack(side=tk.LEFT, padx=3, pady=3)
 
         tk.Frame(self.frame_toolbar, width=2, bg="#CCCCCC", height=22).pack(side=tk.LEFT, padx=5)
 
@@ -311,6 +317,8 @@ class EditorApp:
         self.root.bind("<Control-O>", lambda e: self.abrir_imagen())
         self.root.bind("<Control-s>", lambda e: self.guardar_como())
         self.root.bind("<Control-S>", lambda e: self.guardar_como())
+        self.root.bind("<Control-m>", lambda e: self.abrir_dialogo_correo())
+        self.root.bind("<Control-M>", lambda e: self.abrir_dialogo_correo())
         self.root.bind("<Control-z>", lambda e: self.accion_deshacer())
         self.root.bind("<Control-Z>", lambda e: self.accion_deshacer())
         self.root.bind("<Control-y>", lambda e: self.accion_rehacer())
@@ -429,6 +437,172 @@ class EditorApp:
                 "Error al guardar",
                 f"Ocurrió un error al intentar guardar la imagen:\n{e}"
             )
+
+    # -------------------------------------------------------------
+    # 3.11 y 4. ENVÍO POR CORREO ELECTRÓNICO (GMAIL SMTP)
+    # -------------------------------------------------------------
+
+    def abrir_dialogo_correo(self):
+        """
+        Abre una ventana modal para redactar y despachar el correo electrónico con
+        la imagen procesada como archivo adjunto, cumpliendo con los puntos 3.11 y 4 del PDF.
+        """
+        if not self._validar_imagen_cargada():
+            return
+
+        ventana_correo = tk.Toplevel(self.root)
+        ventana_correo.title("Enviar Imagen por Gmail")
+        ventana_correo.geometry("450x540")
+        ventana_correo.resizable(False, False)
+        ventana_correo.transient(self.root)
+        ventana_correo.grab_set()
+
+        # Encabezado informativo
+        frame_cabecera = tk.Frame(ventana_correo, bg="#2C3E50", pady=8)
+        frame_cabecera.pack(fill=tk.X)
+        tk.Label(
+            frame_cabecera,
+            text="ENVIAR IMAGEN VIA GMAIL (SMTP)",
+            font=("Arial", 11, "bold"),
+            bg="#2C3E50",
+            fg="white"
+        ).pack()
+
+        frame_formulario = tk.Frame(ventana_correo, padx=15, pady=10)
+        frame_formulario.pack(fill=tk.BOTH, expand=True)
+
+        # 1. Remitente
+        tk.Label(frame_formulario, text="Remitente (Gmail):", font=("Arial", 9, "bold")).grid(
+            row=0, column=0, sticky=tk.W, pady=3
+        )
+        var_remitente = tk.StringVar(value=REMITENTE_DEFAULT)
+        entry_remitente = tk.Entry(frame_formulario, textvariable=var_remitente, width=36)
+        entry_remitente.grid(row=0, column=1, sticky=tk.W, pady=3)
+
+        # 2. Destinatario (Combobox editable con sugerencias o ingreso manual)
+        tk.Label(frame_formulario, text="Destinatario:", font=("Arial", 9, "bold")).grid(
+            row=1, column=0, sticky=tk.W, pady=3
+        )
+        var_destinatario = tk.StringVar(value=DESTINATARIOS_PREDEFINIDOS[0])
+        combo_destinatario = ttk.Combobox(
+            frame_formulario, textvariable=var_destinatario, values=DESTINATARIOS_PREDEFINIDOS, width=33
+        )
+        combo_destinatario.grid(row=1, column=1, sticky=tk.W, pady=3)
+
+        # 3. Asunto
+        tk.Label(frame_formulario, text="Asunto:", font=("Arial", 9, "bold")).grid(
+            row=2, column=0, sticky=tk.W, pady=3
+        )
+        var_asunto = tk.StringVar(value="Imagen procesada con Editor de Imágenes - TPL3")
+        entry_asunto = tk.Entry(frame_formulario, textvariable=var_asunto, width=36)
+        entry_asunto.grid(row=2, column=1, sticky=tk.W, pady=3)
+
+        # 4. Formato del archivo adjunto
+        tk.Label(frame_formulario, text="Formato adjunto:", font=("Arial", 9, "bold")).grid(
+            row=3, column=0, sticky=tk.W, pady=3
+        )
+        var_formato = tk.StringVar(value="PNG")
+        frame_formato = tk.Frame(frame_formulario)
+        frame_formato.grid(row=3, column=1, sticky=tk.W, pady=3)
+        tk.Radiobutton(frame_formato, text="PNG (Sin pérdida)", variable=var_formato, value="PNG").pack(side=tk.LEFT)
+        tk.Radiobutton(frame_formato, text="JPEG (Comprimido)", variable=var_formato, value="JPEG").pack(side=tk.LEFT, padx=10)
+
+        # 5. Mensaje
+        tk.Label(frame_formulario, text="Mensaje:", font=("Arial", 9, "bold")).grid(
+            row=4, column=0, sticky=tk.NW, pady=3
+        )
+        txt_mensaje = tk.Text(frame_formulario, height=6, width=34, font=("Arial", 9), wrap=tk.WORD)
+        txt_mensaje.grid(row=4, column=1, sticky=tk.W, pady=3)
+        txt_mensaje.insert(
+            "1.0",
+            "Profesor,\n\nLe envío la imagen editada a través del Editor de Imágenes desarrollado para la materia Programación II.\n\nSaludos cordiales."
+        )
+
+        # Info del adjunto
+        w, h = self.imagen_actual.size
+        frame_info = tk.Frame(frame_formulario, bg="#ECF0F1", relief=tk.GROOVE, bd=1, padx=8, pady=5)
+        frame_info.grid(row=5, column=0, columnspan=2, fill=tk.X, pady=8)
+        lbl_info_adj = tk.Label(
+            frame_info,
+            text=f"📎 Adjunto: imagen actual ({w}x{h} px) | Límite estricto de envío: 25 MB",
+            bg="#ECF0F1",
+            fg="#2C3E50",
+            font=("Arial", 8)
+        )
+        lbl_info_adj.pack()
+
+        # Etiqueta de estado del envío
+        lbl_estado_envio = tk.Label(frame_formulario, text="", font=("Arial", 8, "italic"), fg="#007ACC")
+        lbl_estado_envio.grid(row=6, column=0, columnspan=2, pady=2)
+
+        # Botones de Acción
+        frame_botones = tk.Frame(ventana_correo, pady=8)
+        frame_botones.pack(fill=tk.X)
+
+        def ejecutar_envio():
+            remitente = var_remitente.get().strip()
+            destinatario = var_destinatario.get().strip()
+            asunto = var_asunto.get().strip()
+            cuerpo = txt_mensaje.get("1.0", tk.END).strip()
+            formato = var_formato.get()
+
+            # Deshabilitar botón durante el despacho
+            btn_enviar.config(state=tk.DISABLED, text="Enviando correo...")
+            btn_cancelar.config(state=tk.DISABLED)
+            lbl_estado_envio.config(text="Conectando con smtp.gmail.com:465 vía SSL...")
+
+            def tarea_envio_hilo():
+                exito, mensaje_resp, fue_comprimida = GestorCorreo.enviar_correo(
+                    remitente=remitente,
+                    destinatario=destinatario,
+                    asunto=asunto,
+                    cuerpo_mensaje=cuerpo,
+                    imagen=self.imagen_actual,
+                    formato_adjunto=formato
+                )
+
+                def callback_final():
+                    if ventana_correo.winfo_exists():
+                        btn_enviar.config(state=tk.NORMAL, text="📤 ENVIAR POR GMAIL")
+                        btn_cancelar.config(state=tk.NORMAL)
+                        lbl_estado_envio.config(text="")
+
+                    if exito:
+                        messagebox.showinfo("Envío de Correo", mensaje_resp, parent=self.root)
+                        if ventana_correo.winfo_exists():
+                            ventana_correo.destroy()
+                        self._set_estado(f"Correo enviado exitosamente a {destinatario}.")
+                    else:
+                        messagebox.showerror("Error al enviar", mensaje_resp, parent=ventana_correo if ventana_correo.winfo_exists() else self.root)
+
+                self.root.after(0, callback_final)
+
+            hilo = threading.Thread(target=tarea_envio_hilo, daemon=True)
+            hilo.start()
+
+        btn_enviar = tk.Button(
+            frame_botones,
+            text="📤 ENVIAR POR GMAIL",
+            bg="#27AE60",
+            fg="white",
+            font=("Arial", 9, "bold"),
+            padx=12,
+            pady=4,
+            command=ejecutar_envio
+        )
+        btn_enviar.pack(side=tk.LEFT, padx=30)
+
+        btn_cancelar = tk.Button(
+            frame_botones,
+            text="✕ Cancelar",
+            bg="#95A5A6",
+            fg="white",
+            font=("Arial", 9),
+            padx=10,
+            pady=4,
+            command=ventana_correo.destroy
+        )
+        btn_cancelar.pack(side=tk.RIGHT, padx=30)
 
     def cerrar_imagen(self):
         """Cierra la imagen actual y limpia el área de trabajo."""
@@ -1066,9 +1240,15 @@ class EditorApp:
 
         # Botones de herramientas
         self.btn_guardar.config(state=estado_img)
+        self.btn_correo.config(state=estado_img)
         self.btn_recortar_mouse.config(state=estado_img)
         self.btn_ajustes_color.config(state=estado_img)
         self.btn_binarizar.config(state=estado_img)
+
+        try:
+            self.menu_archivo.entryconfig("Enviar por correo... (Ctrl+M)", state=estado_img)
+        except Exception:
+            pass
 
     def _set_estado(self, mensaje: str):
         """Actualiza el texto de la barra de estado inferior."""
@@ -1089,6 +1269,7 @@ class EditorApp:
             "Atajos de teclado del Editor:\n\n"
             "• Ctrl + O : Abrir imagen\n"
             "• Ctrl + S : Guardar imagen procesada\n"
+            "• Ctrl + M : Enviar imagen por correo electrónico\n"
             "• Ctrl + Z : Deshacer cambio\n"
             "• Ctrl + Y : Rehacer cambio\n"
             "• Enter    : Confirmar vista previa activa\n"
