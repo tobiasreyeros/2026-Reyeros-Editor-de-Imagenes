@@ -27,7 +27,7 @@ from PIL import Image
 # CONFIGURACIÓN DE AUTENTICACIÓN GMAIL (HARDCODEADA)
 # =============================================================================
 # Escribe aquí tu contraseña de aplicación de 16 caracteres generada en Google:
-GMAIL_APP_PASSWORD = "ESCRIBE_AQUI_TU_CONTRASENA_DE_APLICACION"
+GMAIL_APP_PASSWORD = "hnar eika prre dpgr"
 
 # Correo remitente por defecto (cuenta utilizada en el TP)
 REMITENTE_DEFAULT = "tobiastrabajo2@gmail.com"
@@ -165,7 +165,7 @@ class GestorCorreo:
         Retorna una tupla: (exito: bool, mensaje_resultado: str, fue_comprimida: bool)
         """
         # Validar contraseña configurada
-        password = GMAIL_APP_PASSWORD.strip()
+        password = GMAIL_APP_PASSWORD.replace(" ", "").strip()
         if not password or password == "ESCRIBE_AQUI_TU_CONTRASENA_DE_APLICACION":
             return (
                 False,

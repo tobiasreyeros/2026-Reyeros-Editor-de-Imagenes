@@ -452,14 +452,15 @@ class EditorApp:
 
         ventana_correo = tk.Toplevel(self.root)
         ventana_correo.title("Enviar Imagen por Gmail")
-        ventana_correo.geometry("450x540")
-        ventana_correo.resizable(False, False)
+        ventana_correo.geometry("480x560")
+        ventana_correo.minsize(450, 480)
+        ventana_correo.resizable(True, True)
         ventana_correo.transient(self.root)
         ventana_correo.grab_set()
 
-        # Encabezado informativo
+        # 1. Encabezado superior
         frame_cabecera = tk.Frame(ventana_correo, bg="#2C3E50", pady=8)
-        frame_cabecera.pack(fill=tk.X)
+        frame_cabecera.pack(side=tk.TOP, fill=tk.X)
         tk.Label(
             frame_cabecera,
             text="ENVIAR IMAGEN VIA GMAIL (SMTP)",
@@ -468,8 +469,29 @@ class EditorApp:
             fg="white"
         ).pack()
 
-        frame_formulario = tk.Frame(ventana_correo, padx=15, pady=10)
-        frame_formulario.pack(fill=tk.BOTH, expand=True)
+        # 2. Barra inferior de botones (pack side=BOTTOM primero para que SIEMPRE sea visible)
+        frame_botones = tk.Frame(ventana_correo, bg="#F0F0F0", pady=10)
+        frame_botones.pack(side=tk.BOTTOM, fill=tk.X)
+
+        # 3. Contenedor central con scrollbar para que ningún campo quede oculto en pantallas chicas
+        canvas_contenedor = tk.Canvas(ventana_correo, highlightthickness=0)
+        scrollbar_y = ttk.Scrollbar(ventana_correo, orient="vertical", command=canvas_contenedor.yview)
+        frame_formulario = tk.Frame(canvas_contenedor, padx=15, pady=10)
+
+        frame_formulario.bind(
+            "<Configure>",
+            lambda e: canvas_contenedor.configure(scrollregion=canvas_contenedor.bbox("all"))
+        )
+        canvas_win = canvas_contenedor.create_window((0, 0), window=frame_formulario, anchor="nw")
+
+        def _ajustar_ancho_canvas(event):
+            canvas_contenedor.itemconfig(canvas_win, width=event.width)
+        canvas_contenedor.bind("<Configure>", _ajustar_ancho_canvas)
+
+        canvas_contenedor.configure(yscrollcommand=scrollbar_y.set)
+
+        scrollbar_y.pack(side=tk.RIGHT, fill=tk.Y)
+        canvas_contenedor.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         # 1. Remitente
         tk.Label(frame_formulario, text="Remitente (Gmail):", font=("Arial", 9, "bold")).grid(
@@ -521,7 +543,7 @@ class EditorApp:
         # Info del adjunto
         w, h = self.imagen_actual.size
         frame_info = tk.Frame(frame_formulario, bg="#ECF0F1", relief=tk.GROOVE, bd=1, padx=8, pady=5)
-        frame_info.grid(row=5, column=0, columnspan=2, fill=tk.X, pady=8)
+        frame_info.grid(row=5, column=0, columnspan=2, sticky=tk.EW, pady=8)
         lbl_info_adj = tk.Label(
             frame_info,
             text=f"📎 Adjunto: imagen actual ({w}x{h} px) | Límite estricto de envío: 25 MB",
@@ -534,10 +556,6 @@ class EditorApp:
         # Etiqueta de estado del envío
         lbl_estado_envio = tk.Label(frame_formulario, text="", font=("Arial", 8, "italic"), fg="#007ACC")
         lbl_estado_envio.grid(row=6, column=0, columnspan=2, pady=2)
-
-        # Botones de Acción
-        frame_botones = tk.Frame(ventana_correo, pady=8)
-        frame_botones.pack(fill=tk.X)
 
         def ejecutar_envio():
             remitente = var_remitente.get().strip()

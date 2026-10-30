@@ -56,6 +56,16 @@ El proyecto es un editor de imágenes de escritorio diseñado bajo una arquitect
 2. Elija la ubicación, nombre de archivo y formato de salida (`.png`, `.jpg`, `.bmp`).
 3. El sistema valida automáticamente las incompatibilidades de canal alfa: si guarda una imagen con transparencia en formato JPEG, la fusiona sobre un fondo blanco para evitar fallas o corrupción del archivo.
 
+### 2.7 Enviar imagen por correo electrónico (Gmail SMTP)
+1. Con una imagen abierta y editada, haga clic en el botón **📧 Enviar Correo**, ingrese al menú **Archivo** -> **Enviar por correo...** o presione el atajo de teclado `Ctrl + M`.
+2. Se desplegará la ventana modal de envío por correo:
+   * **Remitente:** Cuenta configurada para el despacho (`tobiastrabajo2@gmail.com`).
+   * **Destinatario:** Seleccione un destinatario de la lista de sugerencias o escriba una dirección manualmente.
+   * **Asunto y Mensaje:** Complete los campos correspondientes.
+   * **Formato adjunto:** Seleccione `PNG` o `JPEG`.
+3. Haga clic en **📤 ENVIAR POR GMAIL** ubicado de manera fija en la base de la ventana.
+4. El envío se procesa en segundo plano sin congelar la aplicación, verificando el límite estricto de 25 MB y notificando el resultado al finalizar.
+
 ---
 
 ## 3. Descripción de cada Función de la Aplicación
@@ -105,7 +115,6 @@ El proyecto es un editor de imágenes de escritorio diseñado bajo una arquitect
 
 ## 4. Limitaciones y Errores Conocidos
 
-* **Envío de correos temporalmente inactivo (estado incompleto):** Aunque el nuevo módulo `correo.py` y la interfaz de redacción están plenamente integrados en el código principal, los envíos de correo aún no se pueden realizar debido a que la contraseña de aplicación de Google (`GMAIL_APP_PASSWORD`) aún no ha sido configurada en el código.
 * **Formatos de archivo admitidos:** La aplicación está optimizada para archivos JPEG, PNG y BMP. Formatos vectoriales (SVG) o de animación (GIF con múltiples cuadros) no están contemplados en esta etapa.
 * **Recorte mínimo:** No se permite realizar recortes menores a 5x5 píxeles para evitar selecciones accidentales por clics aislados.
 * **Empaquetado a ejecutable (.exe):** La generación del binario ejecutable independiente para Windows corresponde a la etapa final del proyecto.
