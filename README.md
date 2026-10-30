@@ -117,11 +117,19 @@ El proyecto es un editor de imágenes de escritorio diseñado bajo una arquitect
 
 * **Formatos de archivo admitidos:** La aplicación está optimizada para archivos JPEG, PNG y BMP. Formatos vectoriales (SVG) o de animación (GIF con múltiples cuadros) no están contemplados en esta etapa.
 * **Recorte mínimo:** No se permite realizar recortes menores a 5x5 píxeles para evitar selecciones accidentales por clics aislados.
-* **Empaquetado a ejecutable (.exe):** La generación del binario ejecutable independiente para Windows corresponde a la etapa final del proyecto.
 
 ---
 
-## 5. Autor
+## 5. Aplicación Ejecutable (.exe para Windows)
+
+La aplicación se encuentra compilada como ejecutable autónomo (`EditorDeImagenes.exe`) ubicado en la carpeta `dist/`.
+* **Compatibilidad:** Ejecutable independiente para Windows de 64 bits.
+* **Sin dependencias externas:** No requiere tener instalado Python ni librerías en el equipo de destino, ya que incluye empaquetados el intérprete, los módulos de procesamiento matricial (`numpy`, `pillow`), la interfaz gráfica (`tkinter`) y los componentes de sonido y red (`winsound`, `smtplib`).
+* **Ejecución directa:** Basta con hacer doble clic sobre `EditorDeImagenes.exe` para iniciar la aplicación.
+
+---
+
+## 6. Autor
 
 * **Estudiante:** Tobias Reyeros
 * **Materia:** Programación II · 5.º año
