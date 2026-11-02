@@ -19,6 +19,7 @@ import os
 import re
 import smtplib
 import socket
+import ssl
 from email.message import EmailMessage
 from typing import Optional, Tuple
 from PIL import Image
@@ -27,7 +28,7 @@ from PIL import Image
 # CONFIGURACIÓN DE AUTENTICACIÓN GMAIL (HARDCODEADA)
 # =============================================================================
 # Escribe aquí tu contraseña de aplicación de 16 caracteres generada en Google:
-GMAIL_APP_PASSWORD = "hnar eika prre dpgr"
+GMAIL_APP_PASSWORD = "hyhz daps kaai rnyz"
 
 # Correo remitente por defecto (cuenta utilizada en el TP)
 REMITENTE_DEFAULT = "tobiastrabajo2@gmail.com"
@@ -35,8 +36,6 @@ REMITENTE_DEFAULT = "tobiastrabajo2@gmail.com"
 # Lista de destinatarios frecuentes (profesores y compañeros de clase)
 DESTINATARIOS_PREDEFINIDOS = [
     "fjcoronati@gmail.com",     # Docente 1 (Profesor del TP)
-    "lafortaleza246@gmail.com", # Docente 2
-    "mfedullo@gmail.com",       # Docente 3
     "elcrack35158@gmail.com",   # Compañero
     "tobiastrabajo2@gmail.com", # Correo propio
 ]
@@ -217,22 +216,45 @@ class GestorCorreo:
                 fue_comprimida,
             )
 
-        # Conectar y enviar vía SMTP_SSL
+        # Conectar y enviar con fallback robusto (465 SSL directo y 587 STARTTLS)
+        # Compatible tanto con ejecución en Python como en binario .exe empaquetado
+        contexto_ssl = ssl.create_default_context()
+        servidor_conectado = False
+        ultimo_error = None
+
+        # Intento 1: Puerto 465 (SSL directo)
         try:
-            with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=30) as servidor:
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=contexto_ssl, timeout=30) as servidor:
                 servidor.login(remitente.strip(), password)
                 servidor.send_message(email)
+            servidor_conectado = True
+        except (smtplib.SMTPServerDisconnected, OSError, socket.error) as err_ssl:
+            ultimo_error = err_ssl
 
+        # Intento 2: Si el puerto 465 fue cerrado o bloqueado (común en binarios .exe/redes escolares), probar 587 STARTTLS
+        if not servidor_conectado:
+            try:
+                with smtplib.SMTP("smtp.gmail.com", 587, timeout=30) as servidor:
+                    servidor.ehlo()
+                    servidor.starttls(context=contexto_ssl)
+                    servidor.ehlo()
+                    servidor.login(remitente.strip(), password)
+                    servidor.send_message(email)
+                servidor_conectado = True
+            except Exception as err_tls:
+                ultimo_error = err_tls
+
+        if servidor_conectado:
             mensaje_exito = f"El correo se envió exitosamente a:\n{destinatario.strip()}"
             if fue_comprimida:
                 mensaje_exito += (
                     "\n\n(Aviso técnico: la imagen fue optimizada y comprimida automáticamente "
                     "para no sobrepasar el límite de 25 MB de Gmail)."
                 )
-
             return True, mensaje_exito, fue_comprimida
 
-        except smtplib.SMTPAuthenticationError:
+        # Si ambos intentos fallaron
+        if isinstance(ultimo_error, smtplib.SMTPAuthenticationError):
             return (
                 False,
                 "Error de autenticación: Las credenciales de Gmail son incorrectas.\n"
@@ -240,21 +262,16 @@ class GestorCorreo:
                 "sean válidos y correspondan a la misma cuenta de Google.",
                 fue_comprimida,
             )
-
-        except (socket.gaierror, smtplib.SMTPConnectError, OSError) as e:
-            return (
-                False,
-                f"Error de conexión: No se pudo conectar con el servidor 'smtp.gmail.com'.\n"
-                f"Comprueba tu conexión a internet.\nDetalle: {e}",
-                fue_comprimida,
-            )
-
-        except smtplib.SMTPRecipientsRefused:
+        elif isinstance(ultimo_error, smtplib.SMTPRecipientsRefused):
             return (
                 False,
                 f"La dirección de correo de destino fue rechazada por el servidor: {destinatario}",
                 fue_comprimida,
             )
-
-        except Exception as e:
-            return False, f"Ocurrió un error inesperado al enviar el correo:\n{e}", fue_comprimida
+        else:
+            return (
+                False,
+                f"Error de conexión: No se pudo conectar con el servidor 'smtp.gmail.com'.\n"
+                f"Comprueba tu conexión a internet.\nDetalle: {ultimo_error}",
+                fue_comprimida,
+            )
