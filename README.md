@@ -18,47 +18,10 @@ El proyecto consiste en un editor de imágenes integral para Windows diseñado b
 ### Capturas de Pantalla
 > *Nota: Para visualizar las interfaces de la aplicación:*
 
-```
-+--------------------------------------------------------------------------------------------------+
-| Editor de Imágenes - IPETyM N° 246                                                      [_][X]   |
-+--------------------------------------------------------------------------------------------------+
-| Archivo   Editar   Imagen   Filtros   Ajustes   Ayuda                                            |
-+--------------------------------------------------------------------------------------------------+
-| [📂 Abrir] [💾 Guardar] [📧 Enviar Correo] | [↶ Deshacer] [↷ Rehacer] | [✂ Recortar] [🎚 Ajustes]   |
-+--------------------------------------------------------------------------------------------------+
-|  [VISTA PREVIA ACTIVA: Rotar 90° Derecha]                 [✓ Confirmar Cambio] [✕ Cancelar]      |
-+--------------------------------------------------------------------------------------------------+
-|                 ORIGINAL (Antes)                 |             VISTA PREVIA (Después)            |
-|       +----------------------------------+       |       +----------------------------------+    |
-|       |                                  |       |       |                                  |    |
-|       |         [Imagen Base]            |       |       |       [Resultado Filtro]         |    |
-|       |                                  |       |       |                                  |    |
-|       +----------------------------------+       |       +----------------------------------+    |
-+--------------------------------------------------------------------------------------------------+
-| Listo. Imagen 'zenith.jpg' cargada correctamente.                        736 x 341 px | RGB      |
-+--------------------------------------------------------------------------------------------------+
-```
+<img width="1098" height="738" alt="image" src="https://github.com/user-attachments/assets/88c887dd-0cb9-4811-8d05-d0c046e611a2" />
 
-```
-+-------------------------------------------------------------+
-| Enviar Imagen por Gmail                              [_][X] |
-+-------------------------------------------------------------+
-|              ENVIAR IMAGEN VIA GMAIL (SMTP)                 |
-+-------------------------------------------------------------+
-| Remitente (Gmail): [ tobiastrabajo2@gmail.com             ] |
-| Destinatario:      [ fjcoronati@gmail.com               v ] |
-| Asunto:            [ Imagen procesada con Editor - TPL3   ] |
-| Formato adjunto:   (*) PNG (Sin pérdida)  ( ) JPEG (Compr.) |
-| Mensaje:           +--------------------------------------+ |
-|                    | Profesor, adjunto envío la imagen... | |
-|                    +--------------------------------------+ |
-| [📎 Adjunto: imagen actual (736x341 px) | Límite: 25 MB]    |
-+-------------------------------------------------------------+
-|          [ 📤 ENVIAR POR GMAIL ]        [ ✕ Cancelar ]      |
-+-------------------------------------------------------------+
-```
 
----
+<img width="476" height="588" alt="image" src="https://github.com/user-attachments/assets/e03b3ec0-3480-46fd-a412-49d06aeaf42b" />
 
 ## 2. Guía de Instalación
 
